@@ -3,37 +3,48 @@ import url from 'url';
 
 const PORT = process.env.PORT || 4300;
 
-const server = http.createServer((req, resp) => {
-  function calculator(a: number, b: number) {
-    const add: number = a + b;
-    const substract: number = a - b;
-    const multiply: number = a * b;
-    const divide: number = a / b;
+const server = http.createServer((request, response) => {
+  function calculator(a: any, b: any) {
+    const num1 = Number(a);
+    const num2 = Number(b);
+    const add: number = num1 + num2;
+    const substract: number = num1 - num2;
+    const multiply: number = num1 * num2;
+    const divide: number = num1 / num2;
 
     return { add, substract, multiply, divide };
   }
 
-  if (!req.url) {
+  if (!request.url) {
     server.emit('error', new Error('Error 404'));
-    resp.write(`<h1>Error 404</h1>`);
+    response.write(`<h1>Error 404</h1>`);
     return;
   }
 
-  const { pathname } = url.parse(req.url);
+  const { pathname, search } = url.parse(request.url);
 
   if (pathname !== '/calculator') {
     server.emit('error', new Error('Path not found'));
-    resp.write(`<h1>Error 404</h1><h2>Path not found</h2>`);
+    response.write(`<h1>Error 404</h1><h2>Path not found</h2>`);
     return;
   }
 
-  resp.end();
+  if (pathname === '/calculator') {
+    const urlParams = new URLSearchParams(search!);
+    const num1 = urlParams.get('a');
+    const num2 = urlParams.get('b');
+
+    const answers = calculator(num1!, num2!);
+    response.write(`<h1>CALCULATOR RESULTS</h1>
+      <p>${num1} + ${num2} = ${answers.add}</p>
+      <p>${num1} - ${num2} = ${answers.substract}</p>
+      <p>${num1} * ${num2} = ${answers.multiply}</p>
+      <p>${num1} / ${num2} = ${answers.divide}</p>
+    `);
+  }
+
+  response.end();
 });
 
 server.on('error', () => {});
-
-server.on('listening', () => {
-  console.log('Listening in http://localhost:' + PORT);
-});
-
 server.listen(PORT);
